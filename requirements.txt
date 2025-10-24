@@ -1,5 +1,8 @@
-flask
-twilio
-requests
-python-dotenv
-agno
+Flask==2.3.5
+twilio==8.13.0
+requests==2.31.0
+python-dotenv==1.0.1
+agno==0.6.13
+google-api-python-client==2.96.0
+google-auth==2.21.0
+google-auth-oauthlib==1.0.0
