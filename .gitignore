@@ -1,0 +1,18 @@
+# Arquivo de variáveis de ambiente
+.env
+
+# Instâncias de banco de dados
+instance/Assistente.db
+instance/Biassistant.db
+
+# Arquivos de segredos do Google/Outros
+credentials.json
+token.json
+
+# Arquivos temporários ou gerados
+scripts/*.zip
+scripts/*.json
+
+# Dependências
+__pycache__/
+*.pyc
