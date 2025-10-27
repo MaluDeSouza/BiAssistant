@@ -1,8 +1,12 @@
 # biassistant/repositories/compra_repository.py
-import sqlite3
 import os
+import sqlite3
 
-DB_PATH = "instance/assistente.db"
+# Caminho seguro para Render: usa /tmp
+DB_PATH = "/tmp/assistente.db"
+
+# Cria a pasta se não existir
+os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
 def criar_tabela():
     conn = sqlite3.connect(DB_PATH)
@@ -10,12 +14,14 @@ def criar_tabela():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS compras (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nome TEXT NOT NULL,
-            quantidade INTEGER DEFAULT 1
+            item TEXT NOT NULL,
+            quantidade INTEGER,
+            preco REAL
         )
     """)
     conn.commit()
     conn.close()
+
 
 def adicionar_compra(nome, quantidade=1):
     conn = sqlite3.connect(DB_PATH)
