@@ -1,5 +1,6 @@
 # biassistant/repositories/compra_repository.py
 import sqlite3
+import os
 
 DB_PATH = "instance/assistente.db"
 
