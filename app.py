@@ -5,6 +5,7 @@ from biassistant.services.compras_service import inicializar, adicionar_item, li
 from biassistant.services.google_calendar_service import criar_evento
 import biassistant.banco as banco
 from datetime import datetime
+import os
 
 app = Flask(__name__)
 
@@ -87,4 +88,5 @@ def whatsapp_reply():
     return str(resp)
 
 if __name__ == "__main__":
-    app.run(port=5000, debug=True)
+    port = int(os.environ.get("PORT", 5000))  # pega a porta do Render ou usa 5000 localmente
+    app.run(host="0.0.0.0", port=port, debug=False)
