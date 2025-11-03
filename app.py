@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, Response
 from twilio.twiml.messaging_response import MessagingResponse
 from biassistant.gemini_connector import interpretar_comando, responder_agno
 from biassistant.services.compras_service import inicializar, adicionar_item, listar_itens
@@ -6,23 +6,30 @@ from biassistant.services.google_calendar_service import criar_evento
 import biassistant.banco as banco
 from datetime import datetime
 import os
+import traceback
 
 app = Flask(__name__)
 
-# Inicializa banco e tabela de compras
-banco.criar_tabelas()
-inicializar()
+# --- Inicialização segura do banco ---
+try:
+    banco.criar_tabelas()
+    inicializar()
+    print("✅ Banco de dados e tabelas inicializados com sucesso.")
+except Exception as e:
+    print("❌ Erro ao inicializar banco de dados:", e)
+    traceback.print_exc()
 
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp_reply():
     incoming_msg = request.values.get("Body", "").strip()
+    print(f"📩 Mensagem recebida: {incoming_msg}")
     resp = MessagingResponse()
     msg = resp.message()
 
-    comando = interpretar_comando(incoming_msg)
-    print("Comando interpretado:", comando)
-
     try:
+        comando = interpretar_comando(incoming_msg)
+        print("🧠 Comando interpretado:", comando)
+
         # --- LISTA DE COMPRAS ---
         if comando["acao"] == "adicionar_compra":
             sucesso = adicionar_item(comando["item"], comando.get("quantidade", 1))
@@ -56,6 +63,7 @@ def whatsapp_reply():
             hora_inicio = comando["hora_inicio"]
             hora_fim = comando["hora_fim"]
 
+            # Converte ISO 8601 com segurança
             inicio = datetime.fromisoformat(f"{data}T{hora_inicio}:00")
             fim = datetime.fromisoformat(f"{data}T{hora_fim}:00")
 
@@ -69,25 +77,19 @@ def whatsapp_reply():
             msg.body(f"✅ Compromisso '{comando['titulo']}' adicionado ao Google Calendar!")
 
         # --- FALLBACK: AGNO (resposta natural) ---
-        elif comando.get("acao") == "erro" or comando.get("acao") not in [
-            "adicionar_compra",
-            "listar_compras",
-            "adicionar_agenda",
-            "adicionar_agenda_google"
-        ]:
+        else:
             resposta = responder_agno(incoming_msg)
             msg.body(resposta)
 
-        else:
-            msg.body("⚠️ Não consegui interpretar sua solicitação. Tente novamente.")
-
     except Exception as e:
-        msg.body("❓ Não entendi sua mensagem. Pode tentar reformular?")
-        print("Erro ao processar comando:", e, comando)
+        print("❌ Erro ao processar comando:")
+        traceback.print_exc()
+        msg.body("❓ Ocorreu um erro ao processar sua solicitação. Pode tentar reformular?")
 
-    return str(resp)
+    return Response(str(resp), mimetype="application/xml")
+
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))  # pega a porta do Render ou usa 5000 localmente
-    print("PORTA DETECTADA:", os.environ.get("PORT"))
+    port = int(os.environ.get("PORT", 5000))  # pega porta do Render ou usa 5000 localmente
+    print("🌐 Servidor iniciado na porta:", port)
     app.run(host="0.0.0.0", port=port, debug=False)
